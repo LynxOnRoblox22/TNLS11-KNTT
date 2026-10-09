@@ -68,10 +68,10 @@
 
                 <div class="p-4 bg-slate-50 rounded-xl border border-slate-200/80">
                     <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold mb-2 text-sm">
-                        <i class="fa-solid fa-brain"></i>
+                        <i class="fa-solid fa-shuffle"></i>
                     </div>
-                    <h3 class="font-bold text-slate-800 text-sm">Đầy Đủ Cấp Độ</h3>
-                    <p class="text-xs text-slate-500 mt-1">Gồm các câu hỏi Nhận biết, Thông hiểu, Vận dụng phân hóa tốt.</p>
+                    <h3 class="font-bold text-slate-800 text-sm">Đảo Câu & Đáp Án</h3>
+                    <p class="text-xs text-slate-500 mt-1">Tự động xáo trộn câu hỏi và đáp án mỗi lần làm lại giúp ghi nhớ tự nhiên.</p>
                 </div>
 
                 <div class="p-4 bg-slate-50 rounded-xl border border-slate-200/80">
@@ -457,7 +457,7 @@
                     "Trong lĩnh vực sản xuất; là sự thay đổi cơ bản các điều kiện kinh tế xã hội, văn hóa và kỹ thuật xuất phát từ nước Anh.",
                     "Do giai cấp tư sản và đồng minh lãnh đạo, nhằm chống lại chế độ phong kiến, thực dân, thiết lập nhà nước tư sản, mở đường cho chủ nghĩa tư bản phát triển.",
                     "Do những người trí thức cấp tiến ở trong giai cấp tư sản và tiểu tư sản lãnh đạo.",
-                    "Đòi quyền độc lập dân tộc và bảo vệ độc lập dân tộc của các nước thuộc địa trong thế kỷ XX."
+                    "Đ đòi quyền độc lập dân tộc và bảo vệ độc lập dân tộc của các nước thuộc địa trong thế kỷ XX."
                 ],
                 correct: 1,
                 explanation: "Định nghĩa chuẩn xác: CMTS là cuộc cách mạng do giai cấp tư sản và đồng minh lãnh đạo nhằm lật đổ chế độ phong kiến/thực dân, lập nên nhà nước tư sản."
@@ -476,8 +476,43 @@
             }
         ];
 
+        // Thuật toán xáo trộn Fisher-Yates
+        function shuffleArray(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // Chuẩn bị ngân hàng câu hỏi đã được đảo câu hỏi và đảo lựa chọn đáp án
+        function prepareShuffledQuestions() {
+            // 1. Đảo ngẫu nhiên danh sách câu hỏi
+            const shuffledBank = shuffleArray(docQuestionsBank);
+
+            // 2. Đảo ngẫu nhiên các lựa chọn đáp án trong từng câu hỏi
+            return shuffledBank.map(item => {
+                const optionsWithIndices = item.options.map((opt, index) => ({
+                    text: opt,
+                    isCorrect: index === item.correct
+                }));
+
+                const shuffledOptions = shuffleArray(optionsWithIndices);
+                const newCorrectIndex = shuffledOptions.findIndex(o => o.isCorrect);
+
+                return {
+                    difficulty: item.difficulty,
+                    question: item.question,
+                    options: shuffledOptions.map(o => o.text),
+                    correct: newCorrectIndex,
+                    explanation: item.explanation
+                };
+            });
+        }
+
         function startQuiz() {
-            activeQuestions = [...docQuestionsBank];
+            activeQuestions = prepareShuffledQuestions();
             userAnswers = new Array(activeQuestions.length).fill(null);
             currentQuestion = 0;
 
